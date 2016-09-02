@@ -1,0 +1,25 @@
+Calculating Risk Odds Running 100 trials of size 1000000
+
+Attackers: 1 Defenders: 1
+    Odds of Winning Chance: 0.41669612
+    Standard Deviation: 0.000486591677078
+
+Attackers: 2 Defenders: 1
+    Odds of Winning Chance: 0.57860433
+    Standard Deviation: 0.000491634298986
+
+Attackers: 3 Defenders: 1
+    Odds of Winning Chance: 0.65974598
+    Standard Deviation: 0.000464603555994
+
+Attackers: 1 Defenders: 2
+    Odds of Winning Chance: 0.25458173
+    Standard Deviation: 0.000425271555668
+
+Attackers: 2 Defenders: 2
+    Odds of Winning Chance: 0.389748275
+    Standard Deviation: 0.000440946779668
+
+Attackers: 3 Defenders: 2
+    Odds of Winning Chance: 0.539474155
+    Standard Deviation: 0.000382293819092
