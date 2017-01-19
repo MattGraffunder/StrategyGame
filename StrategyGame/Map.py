@@ -214,12 +214,12 @@ class Country(object):
         self.continentId = continentId
         self.ownerId = None
         self.numberOfArmies = 0
-        '''
+        
         #I added these to keep countries as the source of Truth
         #Someone needed to maintain the data, and it makes as much sense here as elsewhere
         self.cardType = cardType
         self.cardStars = cardStars
-        '''
+        
     def getId(self):
         return self.countryId
 
@@ -232,13 +232,13 @@ class Country(object):
     def getOwnerId(self):
         return self.ownerId
 
-    '''    
+       
     def getCardType(self):
         return self.cardType
 
     def getCardStars(self):
         return self.cardStars
-    '''
+    
     def setOwner(self, newOwnerId):
         self.ownerId = newOwnerId
 
