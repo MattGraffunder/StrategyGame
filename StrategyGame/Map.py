@@ -44,6 +44,11 @@ class GameMap(object):
     def getNeighbors(self, countryId):
         return self.neighbors[country.getId()]
 
+class ReadonlyMap(GameMap'''object?'''):
+    #Create a readonly version that can be passed to players
+    #without the ability to be modified
+    pass
+
 #TODO - Add Countries
 class StandardMap(GameMap):
     #Build the standard risk map
