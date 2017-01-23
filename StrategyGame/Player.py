@@ -1,3 +1,5 @@
+import random
+
 class Player(object):
     def __init__(self, id, name):
         self.riskCards = []
@@ -56,6 +58,9 @@ class Player(object):
 
     def GetName(self):
         return self.name
+        
+    def GetFreeArmies(self):
+        return self.freeArmies
 
     def ChooseCountry(self, gameMap):
         """
@@ -70,11 +75,17 @@ class Player(object):
         """
         pass
 
-    def AddArmies(self, armies):
+    def AddArmies(self, numberOfArmies):
         """
         Adds Armies to the player
         """
-        pass
+        self.freeArmies += numberOfArmies
+        
+    def RemoveArmies(self, numberOfArmies):
+        """
+        Removes Armies from the player
+        """
+        self.freeArmies -= numberOfArmies
 
     def AddRiskCard(self, riskCard):
         self.riskCards.append(riskCard)
@@ -100,7 +111,22 @@ class RandomAI(Player):
         Player.__init__(self, id, name)
     def PlayTurn(self):
         pass    
+    def ChooseCountry(self, gameMap):
+        #Get unowned countries
+        choices = gameMap.getPlayerCountries(None)
 
+        #If there aren't unoccupied countries, add armies to owned countries
+        if len(choices) == 0:
+            choices = gameMap.getPlayerCountries(self.id)
+            
+            if len(choices) == 0:
+                return None
+        
+        #choose one at random        
+        country = choices[random.randrange(0, len(choices))]
+                        
+        return country.getId()
+    
 #TODO - Implement Concrete Class
 class SmartAI(Player):
     def __init__(self, id, name = "Smart AI"):

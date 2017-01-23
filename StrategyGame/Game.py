@@ -62,18 +62,29 @@ class Game(object):
 
         for player in self.players:
             player.AddArmies(startingArmies)
-
+        
         #Divide up countries
             #While there are available countries
             #Have players choose next country
-        while self.gameMap.getPlayerCountries(None) > 0:
+        while len(self.gameMap.getPlayerCountries(None)) > 0 or self.GetTotalFreeArmies() > 0:
             for player in self.players:
-                choice = player.ChooseCountry(self.gameMap)
-                #Do something with choice
-                    #Probably Validate it
-                    #Definitely Assign it to player
-        pass
-
+                choiceId = player.ChooseCountry(self.gameMap)
+                
+                #Check if there weren't any more countries to choose
+                if choiceId == None:
+                    break
+                
+                chosenCountry = self.gameMap.getCountry(choiceId)
+                #print chosenCountry
+                #Check that country isn't already owned
+                if chosenCountry.getOwnerId() == None:
+                    chosenCountry.setOwner(player.GetId()) 
+                    chosenCountry.addArmies(1)
+                    player.RemoveArmies(1)
+                elif chosenCountry.getOwnerId() == player.GetId():
+                    chosenCountry.addArmies(1)
+                    player.RemoveArmies(1)
+        
     def PlayRound(self):
 
         #Long run, if open more widely, will need to add move validation at the Game level.
@@ -124,6 +135,9 @@ class Game(object):
         #Start Game
         self.StartGame(gameMap, players)
 
+        #Testing
+        return
+
         #While there are 2 or more active players play rounds
         while len(self.GetActivePlayers()) > 1:
             self.PlayRound()
@@ -131,6 +145,13 @@ class Game(object):
         #declare winner
         winner = self.GetActivePlayers()[0]
         print str(winner) + " wins!"
+
+    def ProcessCommand(self, command):
+        #Switch statement
+        # if commandType == Attack
+        # elif commandTYpe == Place
+        # etc...
+        pass
 
     def GetActivePlayers(self):
         #Get the players who are currently in the game
@@ -155,9 +176,20 @@ class Game(object):
         #Used to Display the game
         pass
 
+    def GetTotalFreeArmies(self):
+        armies = 0
+        
+        for player in self.players:
+            armies += player.GetFreeArmies()
+            
+        return armies
+
     def GetStartingNumberOfArmies(self, numPlayers):
         #Could be refactored to dictionary
         #Probably doesn't matter since it gets call once per game.
+        
+        return 12
+        
         if numPlayers == 2:
             return 50
         elif numPlayers == 3:
