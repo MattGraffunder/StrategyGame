@@ -49,7 +49,7 @@ class Command(object):
     def GetCards(self):
         return self.cards
     def __str__(self):
-        return "Make Better Command String"
+        return "Command Type: " + self.commandType + " Country: " + str(self.country1) + " Armies: " + str(self.quantity)
 
 #Done
 class CommandBuilder(object):    
@@ -61,11 +61,11 @@ class CommandBuilder(object):
     def GetEnd(self, playerId):
         self.commandId += 1
         return Command(self.commandId, playerId, END, None, None, 0, None)
-    def GetMove(self, playerId, country1, numberOfArmies):
-        return Command(self.commandId, playerId, MOVE, country1, None, numberOfArmies, None)
+    def GetMove(self, playerId, country, numberOfArmies):
+        return Command(self.commandId, playerId, MOVE, country, None, numberOfArmies, None)
         self.commandId += 1
     def GetPlace(self, playerId, country, numberOfArmies):
-        return Command(self.commandId, playerId, PLACE, country1, None, numberOfArmies, None)
+        return Command(self.commandId, playerId, PLACE, country, None, numberOfArmies, None)
         self.commandId += 1
     def GetTrade(self, playerId, cards):
         self.commandId += 1

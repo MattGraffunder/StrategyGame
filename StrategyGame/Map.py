@@ -38,6 +38,15 @@ class GameMap(object):
 
         return playerCountries
 
+    def getPlayerContinents(self, playerId):
+        playerContinents = []
+        
+        for continent in self.continents:
+            if continent.isOwnedBy(playerId): 
+                playerContinents.append(continent)
+        
+        return playerContinents
+
     def getCountry(self, countryId):
         return self.countryLookup[countryId]
 
@@ -236,7 +245,6 @@ class Country(object):
 
     def getOwnerId(self):
         return self.ownerId
-
        
     def getCardType(self):
         return self.cardType

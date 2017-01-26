@@ -1,4 +1,4 @@
-import random
+import random, Command
 
 class Player(object):
     def __init__(self, id, name):
@@ -6,6 +6,7 @@ class Player(object):
         self.freeArmies = 0
         self.id = id
         self.name = name
+        self.commandBuilder = Command.CommandBuilder()
         #self.Countries = [] #Might only be a function level variable
 
     def PlayTurn(self, previousResults):
@@ -109,7 +110,20 @@ class RandomAI(Player):
     """
     def __init__(self, id, name = "Random AI"):
         Player.__init__(self, id, name)
-    def PlayTurn(self):
+    def PlayTurn(self, gameMap):
+        #If new armies > 0 Place armies:
+        if self.GetFreeArmies() > 0:
+            countries = gameMap.getPlayerCountries(self.GetId())
+            
+            country = random.choice(countries)
+            armies = random.randrange(1, self.GetFreeArmies() + 1)
+            
+            return self.commandBuilder.GetPlace(self.GetId(), country.getId(), armies)
+        #decide to attack
+        #Skip move for now
+        #end turn
+        
+        return self.commandBuilder.GetEnd(self.id) #Default to End for now
         pass    
     def ChooseCountry(self, gameMap):
         #Get unowned countries
@@ -123,7 +137,7 @@ class RandomAI(Player):
                 return None
         
         #choose one at random        
-        country = choices[random.randrange(0, len(choices))]
+        country = random.choice(choices)#choices[random.randrange(0, len(choices))]
                         
         return country.getId()
     

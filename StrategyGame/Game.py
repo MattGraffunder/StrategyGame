@@ -100,18 +100,49 @@ class Game(object):
                 #Count Player's Countries and Integer Divide by three
                 #Take the greater of three or countries divided by three
                 #Add any Continent Bonus
+                
+            totalNewArmies = 0
+                                
+            #Calculate countries
+            playerCountries = self.gameMap.getPlayerCountries(player.GetId())
+            totalNewArmies = max(len(playerCountries) / 3, 3) #Players get atleast three armies
+            
+            #Calculate continent bonus
+            for continent in self.gameMap.getPlayerContinents(player.GetId()):
+                totalNewArmies += continent.getValue()
+            
+            print player, " New Armies: " + str(totalNewArmies), " Total Armies: " + str(player.GetFreeArmies())
+            
+            #Give armies to player
+            player.AddArmies(totalNewArmies)
 
             #Give Player Turn
-                #Somehow communicate with the Player.
-                #Options are expose Methods, create callback functions, or create message structure
-            hasEnded = false
-            while hasEnded == True:
-                command = player.PlayTurn(None)
-                if commandProcessor.IsValid(command):
-                    action = commandProcessor.GetAction(command)
-                    #Action needs to modify hasEnded somehow
-                else:
+                #Don't need to send anything to the player, player should just work off the new state
+                #Nevermind - Somehow communicate with the Player.
+                #Nevermind - Options are expose Methods, create callback functions, or create message structure                        
+            while True:
+                command = player.PlayTurn(self.gameMap)
+                print command
+                if command.GetCommandType() == Command.PLACE:
+                    #Place Command
+                    placeCountry = self.gameMap.getCountry(command.GetCountry1())
+                    placeCountry.addArmies(command.GetQuantity())
+                    
+                    player.RemoveArmies(command.GetQuantity())
+                elif command.GetCommandType() == Command.ATTACK:
+                    #Attack Command
+                    pass
+                elif command.GetCommandType() == Command.END:
+                    #End Turn
                     break
+                
+                ##Validate
+                #if commandValidatorFactory.IsValid(command):
+                    #action = commandProcessor.GetAction(command)
+                    ##Action needs to modify hasEnded somehow
+                #else:
+                    #break                   
+                
 
             #Hand out one risk card if player conquers one or more territories
 
@@ -136,11 +167,19 @@ class Game(object):
         self.StartGame(gameMap, players)
 
         #Testing
-        return
+        #return
+
+        counter = 0
 
         #While there are 2 or more active players play rounds
         while len(self.GetActivePlayers()) > 1:
             self.PlayRound()
+            
+            counter += 1
+            
+            #testing
+            if counter > 1000:
+                break
 
         #declare winner
         winner = self.GetActivePlayers()[0]
@@ -167,7 +206,7 @@ class Game(object):
 
     def IsActivePlayer(self, playerId):
         #Checks if a player is still active before their turn
-        if self.map.getPlayerCountries(playerId) > 0:
+        if self.gameMap.getPlayerCountries(playerId) > 0:
             return True
         else:
             return False
