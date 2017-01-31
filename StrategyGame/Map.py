@@ -51,7 +51,7 @@ class GameMap(object):
         return self.countryLookup[countryId]
 
     def getNeighbors(self, countryId):
-        return self.neighbors[country.getId()]
+        return self.neighbors[countryId]
 
 class ReadonlyMap(GameMap): #object?
     #Create a readonly version that can be passed to players
@@ -256,7 +256,7 @@ class Country(object):
         self.ownerId = newOwnerId
 
     def getNumberOfArmies(self):
-        return self.NumberOfArmies
+        return self.numberOfArmies
 
     def addArmies(self, armiesToAdd):
         if armiesToAdd < 0:

@@ -114,17 +114,54 @@ class RandomAI(Player):
         #If new armies > 0 Place armies:
         if self.GetFreeArmies() > 0:
             countries = gameMap.getPlayerCountries(self.GetId())
-            
-            country = random.choice(countries)
+            try:
+                country = random.choice(countries)
+            except:
+                for country in gameMap.getAllCountries():
+                    print country
+                raise
+                
             armies = random.randrange(1, self.GetFreeArmies() + 1)
             
             return self.commandBuilder.GetPlace(self.GetId(), country.getId(), armies)
-        #decide to attack
-        #Skip move for now
-        #end turn
+            
+        #Decide to Attack - 90% Chance to attack
+        if random.random() > .1:
+            #Attack
+            
+            #Get AvailableCountries
+            attackerCountries = {}          
+            for country in gameMap.getPlayerCountries(self.GetId()):
+                #Must have more than 1 army                
+                if country.getNumberOfArmies() == 1:
+                    continue
+                    
+                #Must have neighbors not owned by player
+                neighbors = gameMap.getNeighbors(country.getId())
+                
+                for neighbor in neighbors:
+                    if neighbor.getOwnerId() != self.GetId():
+                        if not country in attackerCountries:
+                            attackerCountries[country] = []
+                        
+                        attackerCountries[country].append(neighbor)
+                    
+            if len(attackerCountries) > 0:
+                attackerCountry = random.choice(attackerCountries.keys())
+                
+                #Get number of armies to attack with
+                #Must be in the range of 1 to (# in country -1)
+                armiesToAttackWith = random.randrange(1, attackerCountry.getNumberOfArmies())
+                
+                #Get Neighbor to attack
+                neighbor = random.choice(attackerCountries[attackerCountry])
+                
+                #Attack
+                return self.commandBuilder.GetAttack(self.GetId(), attackerCountry.getId(), neighbor.getId(), armiesToAttackWith)
+            
+        #if nothing else is hit on, return end
+        return self.commandBuilder.GetEnd(self.id) #Default to End for now        
         
-        return self.commandBuilder.GetEnd(self.id) #Default to End for now
-        pass    
     def ChooseCountry(self, gameMap):
         #Get unowned countries
         choices = gameMap.getPlayerCountries(None)

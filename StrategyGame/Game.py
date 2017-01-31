@@ -1,7 +1,7 @@
 #Risk Game Simulation
 
 
-import Map, Player, Command, StrategyCard
+import Map, Player, Command, StrategyCard, Dice
 #import Tkinter
 #Tkinter._test()
 
@@ -40,6 +40,7 @@ class Game(object):
         self.strategyCardDeck = [] 
         self.players = [] # Build Player List
         self.commandProcessor = CommandProcessor()
+        self.gameDice = Dice.GameDice()
 
     def StartGame(self, gameMap, players):        
         #Setup Game
@@ -92,8 +93,9 @@ class Game(object):
         
         #for each active player
         for player in self.players:
-            if not self.IsActivePlayer(player):
+            if not self.IsActivePlayer(player.GetId()):
                 #Player is out of game, skip them
+                print "Player: " + str(player.GetId())
                 continue
             
             #Determine new armies
@@ -123,17 +125,47 @@ class Game(object):
             while True:
                 command = player.PlayTurn(self.gameMap)
                 print command
-                if command.GetCommandType() == Command.PLACE:
-                    #Place Command
+                
+                #Place Command
+                if command.GetCommandType() == Command.PLACE:                    
                     placeCountry = self.gameMap.getCountry(command.GetCountry1())
                     placeCountry.addArmies(command.GetQuantity())
                     
                     player.RemoveArmies(command.GetQuantity())
-                elif command.GetCommandType() == Command.ATTACK:
-                    #Attack Command
-                    pass
-                elif command.GetCommandType() == Command.END:
-                    #End Turn
+                    
+                #Attack Command                    
+                elif command.GetCommandType() == Command.ATTACK:   
+                    #Validate Command
+                    if self.isAttackCommandValid(player, command):
+                        attackerCountry = self.gameMap.getCountry(command.GetCountry1())
+                        defenderCountry = self.gameMap.getCountry(command.GetCountry2())
+                        
+                        #Execute Command
+                        attackers = command.GetQuantity
+                        
+                        #Get Roll Results
+                        #Tuple (attacker wins, defender wins)
+                        wins = self.gameDice.GetWinners(command.GetQuantity(), defenderCountry.getNumberOfArmies())
+                                     
+                        attackerWins = wins[0]
+                        defenderWins = wins[1]
+                                     
+                        #Update number of Armies
+                        attackerCountry.removeArmies(defenderWins)
+                        defenderCountry.removeArmies(attackerWins)
+                        
+                        #Check if defender country changes hands
+                        if defenderCountry.getNumberOfArmies() == 0:
+                            #Assign the country to the attacker
+                            defenderCountry.setOwner(player.GetId())
+                            
+                            #Get Number of armies to move into the conqured country
+                            movingArmies = command.GetQuantity() - defenderWins
+                            
+                            defenderCountry.addArmies(movingArmies)                           
+                    
+                #End Turn
+                elif command.GetCommandType() == Command.END:                    
                     break
                 
                 ##Validate
@@ -178,7 +210,7 @@ class Game(object):
             counter += 1
             
             #testing
-            if counter > 1000:
+            if counter > 10000:
                 break
 
         #declare winner
@@ -206,7 +238,7 @@ class Game(object):
 
     def IsActivePlayer(self, playerId):
         #Checks if a player is still active before their turn
-        if self.gameMap.getPlayerCountries(playerId) > 0:
+        if len(self.gameMap.getPlayerCountries(playerId)) > 0:
             return True
         else:
             return False
@@ -239,6 +271,57 @@ class Game(object):
             return 25
         elif numPlayers == 6:
             return 20        
+
+    def isAttackCommandValid(self, player, attackCommand):
+        errors = []
+        #Simple Validations
+        if attackCommand.GetId() <= 0:
+            errors.append("Command Id Must be Greater than 0.")
+        
+        if attackCommand.GetPlayerId() <= 0:
+            errors.append("Player Id Must be Greater than 0.")
+            
+        if len(attackCommand.GetCountry1().strip()) == 0:
+            errors.append("Attacking country must be specified.")
+        
+        if len(attackCommand.GetCountry1().strip()) == 0:
+            errors.append("Attacked country must be specified.")
+            
+        if attackCommand.GetQuantity() <= 0:
+            errors.append("Must specify one or more attacking armies")
+        
+        if len(errors) > 0:
+            raise ValidationError(errors)
+        
+        #Complex Validations
+        attackingCountry = self.gameMap.getCountry(attackCommand.GetCountry1())
+        attackedCountry = self.gameMap.getCountry(attackCommand.GetCountry2())
+                
+        if attackingCountry.getOwnerId() != player.GetId():
+            errors.append("Attacking Country must be owned by Player")
+            
+        if attackingCountry.getOwnerId() != player.GetId():
+            errors.append("Attacked Country must not be owned by Player")
+            
+        if attackedCountry not in self.gameMap.getNeighbors(attackingCountry.getId()):
+            errors.append("Attacked Country (" + attackedCountry.getId() + ") and Attacking Country (" + attackingCountry.getId() + ") must be neighbors")
+                
+        if attackingCountry.getNumberOfArmies() < attackCommand.GetQuantity():
+            errors.append("Attacking Country must attack with fewer armies than are stationed there")
+        
+        if player.GetFreeArmies() > 0:
+            errors.append("Player cannot have unplaced armies when attacking")
+        
+        if len(errors) > 0:
+            raise ValidationError(errors)
+            
+        return True
+        
+class ValidationError(Exception):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
 
 #Idea: Time Machine Game - Game(Players?) can go back in time and the game will reset.
 

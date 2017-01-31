@@ -49,7 +49,7 @@ class Command(object):
     def GetCards(self):
         return self.cards
     def __str__(self):
-        return "Command Type: " + self.commandType + " Country: " + str(self.country1) + " Armies: " + str(self.quantity)
+        return "Player: " + str(self.playerId) + ", Command Type: " + self.commandType + " Country: " + str(self.country1) + " Armies: " + str(self.quantity)
 
 #Done
 class CommandBuilder(object):    
