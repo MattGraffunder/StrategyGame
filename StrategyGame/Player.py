@@ -1,4 +1,4 @@
-import random, Command
+import random, Command, StrategyCard
 
 class Player(object):
     def __init__(self, id, name):
@@ -91,6 +91,9 @@ class Player(object):
     def AddRiskCard(self, riskCard):
         self.riskCards.append(riskCard)
 
+    def RemoveRiskCard(self, riskCard):
+        self.riskCards.remove(riskCard)
+
     def __str__(self):
         return self.name
 
@@ -124,7 +127,22 @@ class RandomAI(Player):
             armies = random.randrange(1, self.GetFreeArmies() + 1)
             
             return self.commandBuilder.GetPlace(self.GetId(), country.getId(), armies)
-            
+        
+        #Turn in risk cards
+        exchangeChance = 0 
+        if len(self.riskCards) == 3:
+            exchangeChance = .50
+        elif len(self.riskCards) == 4:
+            exchangeChance = .75
+        elif len(self.riskCards) == 5:
+            exchangeChance = 2
+                    
+        if exchangeChance >= random.random():
+            cardSet = self.getCardSet()
+            #If valid card set, play set, otherwise continue
+            if cardSet is not None:
+                return self.commandBuilder.GetTrade(self.GetId(), cardSet)
+       
         #Decide to Attack - 90% Chance to attack
         if random.random() > .1:
             #Attack
@@ -178,6 +196,37 @@ class RandomAI(Player):
                         
         return country.getId()
     
+    def getCardSet(self):
+        cardTypes = {}
+        for card in self.riskCards:
+            if card.GetCardType() in cardTypes:
+                cardTypes[card.GetCardType()].append(card)
+            else:
+                cardTypes[card.GetCardType()] = [card]
+        
+        for cardType in cardTypes:
+            #If there are three of the same type, return all three
+            if len(cardTypes[cardType]) >=3:
+                return cardTypes[cardType][:3]
+            elif StrategyCard.WILD in cardTypes[cardType] and len(cardTypes[cardType]) == 2 and len(cardTypes[StrategyCard.WILD]) >= 1:
+                cardSet = cardTypes[cardType]
+                cardSet.append(cardTypes[WILD][0])
+                return cardSet
+            elif StrategyCard.WILD in cardTypes[cardType] and len(cardTypes[cardType]) == 1 and len(cardTypes[StrategyCard.WILD]) >= 2:
+                cardSet = cardTypes[cardType]
+                cardSet.append(cardTypes[WILD][:2])
+                return cardSet
+            elif len(cardTypes.keys()) >= 3:
+                allTypes = cardTypes.keys()
+                cardSet = []
+                cardSet.append(cardTypes[allTypes[0]][0])
+                cardSet.append(cardTypes[allTypes[1]][0])
+                cardSet.append(cardTypes[allTypes[2]][0])
+                return cardSet
+                
+        #If nothing is found in the whole set, return None
+        return None
+                
 #TODO - Implement Concrete Class
 class SmartAI(Player):
     def __init__(self, id, name = "Smart AI"):

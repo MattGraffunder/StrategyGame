@@ -1,5 +1,7 @@
 import random
 
+WILD = "Wild"
+
 #Done
 class StrategyCard(object):
     def __init__(self, countryId, countryName, cardType, stars):
@@ -27,6 +29,7 @@ class StrategyCard(object):
 class StrategyCardDeck(object):
     def __init__(self):
         self.cards = []
+        self.discards = []
 
     def BuildDeck(self, countries, numWilds):
         """
@@ -47,7 +50,20 @@ class StrategyCardDeck(object):
         """
         Removes a Risk card from the deck, and returns it.
         """
+        #If deck is empty shuffle discards
+        if len(self.cards) == 0:
+            self.cards = self.discards
+            self.discards = []
+            self.ShuffleArray(self.cards)
+        
         return self.cards.pop(0)
+
+    def ReturnCard(self, card):
+        """
+        This adds a risk card back to the discard array.  
+        These cards are shuffled back when the draw deck is empty
+        """
+        self.discards.append(card)
 
     #Helper Methods
     def ShuffleArray(self, array):
@@ -64,3 +80,28 @@ class StrategyCardDeck(object):
             tempVar = array[i]
             array[i] = array[n]
             array[n] = tempVar
+            
+def IsHandValid(cards):
+    cardTypes = {}
+    for card in cards:
+        if card.GetCardType() in cardTypes:
+            cardTypes[card.GetCardType()] += 1
+        else:
+            cardTypes[card.GetCardType()] = 1
+               
+    #Cards must meet one of two criteria:
+    cardType = cardTypes.keys()[0]
+    # 1) All Cards must be the same or wild
+    if cardTypes[cardType] == 3:
+        return True
+    # 2) Two cards of the same type, and one wild
+    elif WILD in cardTypes and cardTypes[cardType] == 2 and cardTypes[WILD] == 1:
+        return True
+    # 3) Any one card, and two wilds
+    elif WILD in cardTypes and cardTypes[cardType] == 1 and cardTypes[WILD] == 2:
+        return True
+    # 4) Three cards of different types (Three regular types, or two different types and one wild)
+    elif len(cardTypes) == 3:
+        return True
+    else:
+        return False

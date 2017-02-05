@@ -69,7 +69,7 @@ class CommandBuilder(object):
         self.commandId += 1
     def GetTrade(self, playerId, cards):
         self.commandId += 1
-        return Command(self.commandId, playerId, TRADE, None, None, 0, Cards)
+        return Command(self.commandId, playerId, TRADE, None, None, 0, cards)
 
 #Done
 class CommandValidatorFactory(object):

@@ -104,6 +104,7 @@ class Game(object):
                 #Add any Continent Bonus
                 
             totalNewArmies = 0
+            conqueredTerritory = False
                                 
             #Calculate countries
             playerCountries = self.gameMap.getPlayerCountries(player.GetId())
@@ -162,10 +163,33 @@ class Game(object):
                             #Get Number of armies to move into the conqured country
                             movingArmies = command.GetQuantity() - defenderWins
                             
-                            defenderCountry.addArmies(movingArmies)                           
+                            defenderCountry.addArmies(movingArmies)  
+                            
+                            #Set conqueredTerritory to true so player gets a risk card.
+                            conqueredTerritory = True      
+                elif command.GetCommandType() == Command.TRADE:
+                    if self.isTradeCommandValid(player, command):
+                        #Execute command
+                        
+                        #Add armies to player
+                        player.AddArmies(self.GetCardSetValue())
+                        
+                        #Return card to deck
+                        for card in command.GetCards():
+                            if not card.GetCardType() == "WILD":
+                                #Check if player owns country, if they do add two armies to country
+                                cardCountry = self.gameMap.getCountry(card.GetCountryId())
+                                if cardCountry.getOwnerId() == player.GetId():
+                                    cardCountry.addArmies(2)
+                            
+                            player.RemoveRiskCard(card)
+                            self.strategyCardDeck.ReturnCard(card)
                     
                 #End Turn
-                elif command.GetCommandType() == Command.END:                    
+                elif command.GetCommandType() == Command.END:         
+                    #If Player conqured a country, give risk card
+                    if conqueredTerritory:
+                        player.AddRiskCard(self.strategyCardDeck.DrawCard())
                     break
                 
                 ##Validate
@@ -270,7 +294,10 @@ class Game(object):
         elif numPlayers == 5:
             return 25
         elif numPlayers == 6:
-            return 20        
+            return 20   
+            
+    def GetCardSetValue(self):
+        return 5
 
     def isAttackCommandValid(self, player, attackCommand):
         errors = []
@@ -316,6 +343,29 @@ class Game(object):
             raise ValidationError(errors)
             
         return True
+        
+    def isTradeCommandValid(self, player, tradeCommand):
+        errors = []
+        
+        #Simple Validations
+        if tradeCommand.GetId() <= 0:
+            errors.append("Command Id Must be Greater than 0.")
+        
+        if tradeCommand.GetPlayerId() <= 0:
+            errors.append("Player Id Must be Greater than 0.")
+        
+        if not len(tradeCommand.GetCards()) == 3:
+            errors.append("Must trade exactly 3 cards.")
+        
+        if len(errors) > 0:
+            raise ValidationError(errors)
+        
+        #Complex Validations
+        if StrategyCard.IsHandValid(tradeCommand.GetCards()):
+            return True
+        else:
+            errors.append("Hand is invalid")
+            raise ValidationError(errors)
         
 class ValidationError(Exception):
     def __init__(self, value):
