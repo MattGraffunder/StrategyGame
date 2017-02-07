@@ -6,6 +6,7 @@ class Player(object):
         self.freeArmies = 0
         self.id = id
         self.name = name
+        self.hasMoved = False
         self.commandBuilder = Command.CommandBuilder()
         #self.Countries = [] #Might only be a function level variable
 
@@ -62,6 +63,12 @@ class Player(object):
         
     def GetFreeArmies(self):
         return self.freeArmies
+
+    def GetHasMoved(self):
+        return self.hasMoved
+        
+    def SetHasMoved(self, hasMoved):
+        self.hasMoved = hasMoved
 
     def ChooseCountry(self, gameMap):
         """
@@ -128,6 +135,10 @@ class RandomAI(Player):
             
             return self.commandBuilder.GetPlace(self.GetId(), country.getId(), armies)
         
+        #Cannot attack, trade cards, or move after moving for the turn
+        if self.GetHasMoved():
+            return self.commandBuilder.GetEnd(self.GetId())
+        
         #Turn in risk cards
         exchangeChance = 0 
         if len(self.riskCards) == 3:
@@ -177,8 +188,30 @@ class RandomAI(Player):
                 #Attack
                 return self.commandBuilder.GetAttack(self.GetId(), attackerCountry.getId(), neighbor.getId(), armiesToAttackWith)
             
-        #if nothing else is hit on, return end
-        return self.commandBuilder.GetEnd(self.id) #Default to End for now        
+        #if nothing else is hit on, move        
+        playerCountries = gameMap.getPlayerCountries(self.GetId())
+        
+        #Must have at least two countries
+        if len(playerCountries) >= 2:
+            moveCountry = random.choice(playerCountries)
+            #If country has atleast 2 armies and has neighbors owned by players
+            if moveCountry.getNumberOfArmies() >=2:
+                #Find neighbors owned by player
+                playerOwnedNeighbors = []
+                for neighbor in gameMap.getNeighbors(moveCountry.getId()):
+                    if neighbor.getOwnerId() == self.GetId():
+                        playerOwnedNeighbors.append(neighbor)
+                        
+                #Choose random neighbor
+                if len(playerOwnedNeighbors) > 0:
+                    moveToCountry = random.choice(playerOwnedNeighbors)
+                    #Must be in the range of 1 to (# in country -1)
+                    moveArmies = random.randrange(1, moveCountry.getNumberOfArmies())
+                    
+                    return self.commandBuilder.GetMove(self.GetId(), moveCountry.getId(), moveToCountry.getId(), moveArmies)
+        
+        #No moves possible
+        return self.commandBuilder.GetEnd(self.GetId())
         
     def ChooseCountry(self, gameMap):
         #Get unowned countries

@@ -121,8 +121,9 @@ class Game(object):
 
             #Give Player Turn
                 #Don't need to send anything to the player, player should just work off the new state
-                #Nevermind - Somehow communicate with the Player.
-                #Nevermind - Options are expose Methods, create callback functions, or create message structure                        
+                
+            player.SetHasMoved(False)
+            
             while True:
                 command = player.PlayTurn(self.gameMap)
                 print command
@@ -167,6 +168,8 @@ class Game(object):
                             
                             #Set conqueredTerritory to true so player gets a risk card.
                             conqueredTerritory = True      
+                            
+                #Trade Command            
                 elif command.GetCommandType() == Command.TRADE:
                     if self.isTradeCommandValid(player, command):
                         #Execute command
@@ -184,7 +187,18 @@ class Game(object):
                             
                             player.RemoveRiskCard(card)
                             self.strategyCardDeck.ReturnCard(card)
-                    
+                
+                #Move Command
+                elif command.GetCommandType() == Command.MOVE:
+                    if self.isMoveCommandValid(player, command):
+                        Country1 = self.gameMap.getCountry(command.GetCountry1())
+                        Country2 = self.gameMap.getCountry(command.GetCountry2())
+                        
+                        Country1.removeArmies(command.GetQuantity())
+                        Country2.addArmies(command.GetQuantity())
+                        
+                        player.SetHasMoved(True)
+                                        
                 #End Turn
                 elif command.GetCommandType() == Command.END:         
                     #If Player conqured a country, give risk card
@@ -314,7 +328,7 @@ class Game(object):
         if len(attackCommand.GetCountry1().strip()) == 0:
             errors.append("Attacked country must be specified.")
             
-        if attackCommand.GetQuantity() <= 0:
+        if attackCommand.GetQuantity() < 1:
             errors.append("Must specify one or more attacking armies")
         
         if len(errors) > 0:
@@ -327,14 +341,17 @@ class Game(object):
         if attackingCountry.getOwnerId() != player.GetId():
             errors.append("Attacking Country must be owned by Player")
             
-        if attackingCountry.getOwnerId() != player.GetId():
+        if attackedCountry.getOwnerId() == player.GetId():
             errors.append("Attacked Country must not be owned by Player")
             
         if attackedCountry not in self.gameMap.getNeighbors(attackingCountry.getId()):
             errors.append("Attacked Country (" + attackedCountry.getId() + ") and Attacking Country (" + attackingCountry.getId() + ") must be neighbors")
                 
-        if attackingCountry.getNumberOfArmies() < attackCommand.GetQuantity():
+        if attackCommand.GetQuantity() > attackingCountry.getNumberOfArmies():
             errors.append("Attacking Country must attack with fewer armies than are stationed there")
+        
+        if player.GetHasMoved():
+            errors.append("Player cannot attack after moving in the same turn.")
         
         if player.GetFreeArmies() > 0:
             errors.append("Player cannot have unplaced armies when attacking")
@@ -357,6 +374,9 @@ class Game(object):
         if not len(tradeCommand.GetCards()) == 3:
             errors.append("Must trade exactly 3 cards.")
         
+        if player.GetHasMoved():
+            errors.append("Player cannot attack after moving in the same turn.")
+            
         if len(errors) > 0:
             raise ValidationError(errors)
         
@@ -366,6 +386,52 @@ class Game(object):
         else:
             errors.append("Hand is invalid")
             raise ValidationError(errors)
+        
+    def isMoveCommandValid(self, player, moveCommand):
+        errors = []
+        
+        #Simple Validations
+        if moveCommand.GetId() <= 0:
+            errors.append("Command Id Must be Greater than 0.")
+        
+        if moveCommand.GetPlayerId() <= 0:
+            errors.append("Player Id Must be Greater than 0.")
+        
+        if len(moveCommand.GetCountry1().strip()) == 0:
+            errors.append("Attacking country must be specified.")
+        
+        if len(moveCommand.GetCountry1().strip()) == 0:
+            errors.append("Attacked country must be specified.")
+            
+        if moveCommand.GetQuantity() < 1:
+            errors.append("Must specify one or more attacking armies")
+        
+        if len(errors) > 0:
+            raise ValidationError(errors)
+            
+        #Complex Validations
+        country1 = self.gameMap.getCountry(moveCommand.GetCountry1())
+        country2 = self.gameMap.getCountry(moveCommand.GetCountry2())
+        
+        if country1.getOwnerId() != player.GetId():
+            errors.append("First Country must be owned by Player")
+            
+        if country2.getOwnerId() != player.GetId():
+            errors.append("Second Country must be owned by Player")
+
+        if country1 not in self.gameMap.getNeighbors(country2.getId()):
+            errors.append("Country 1 (" + attackedCountry.getId() + ") and Country 2 (" + attackingCountry.getId() + ") must be neighbors")
+          
+        if moveCommand.GetQuantity() >= country1.getNumberOfArmies():
+            errors.append("Must leave atleast one army in Move Country")
+
+        if player.GetHasMoved():
+            errors.append("Player cannot attack after moving in the same turn.")
+            
+        if len(errors) > 0:
+            raise ValidationError(errors)
+        
+        return True
         
 class ValidationError(Exception):
     def __init__(self, value):

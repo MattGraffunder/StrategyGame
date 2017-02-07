@@ -49,20 +49,20 @@ class Command(object):
     def GetCards(self):
         return self.cards
     def __str__(self):
-        return "Player: " + str(self.playerId) + ", Command Type: " + self.commandType + " Country: " + str(self.country1) + " Armies: " + str(self.quantity)
+        return "Player: " + str(self.playerId) + ", Command Type: " + self.commandType + " Country: " + str(self.country1) +", " + str(self.country2) + " Armies: " + str(self.quantity)
 
 #Done
 class CommandBuilder(object):    
     def __init__(self):
-        self.commandId = 0
+        self.commandId = 1
     def GetAttack(self, playerId, country1, country2, numberOfArmies):
         self.commandId += 1 # Id unique to player or game?  Does this belong here?
         return Command(self.commandId, playerId, ATTACK, country1, country2, numberOfArmies, None)
     def GetEnd(self, playerId):
         self.commandId += 1
         return Command(self.commandId, playerId, END, None, None, 0, None)
-    def GetMove(self, playerId, country, numberOfArmies):
-        return Command(self.commandId, playerId, MOVE, country, None, numberOfArmies, None)
+    def GetMove(self, playerId, moveFromCountry, moveToCountry, numberOfArmies):
+        return Command(self.commandId, playerId, MOVE, moveFromCountry, moveToCountry, numberOfArmies, None)
         self.commandId += 1
     def GetPlace(self, playerId, country, numberOfArmies):
         return Command(self.commandId, playerId, PLACE, country, None, numberOfArmies, None)
